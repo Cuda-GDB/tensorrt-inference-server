@@ -182,7 +182,7 @@ Context::Execute(
     // Reads input
     std::vector<std::vector<char>> input;
     int err = GetInputTensor(
-        input_fn, payloads[idx].input_context, "INPUT0", payloads[idx].batch_size, input);
+        input_fn, payloads[idx].input_context, "INPUT", payloads[idx].batch_size, input);
     if (err != kSuccess) {
       payloads[idx].error_code = err;
       continue;

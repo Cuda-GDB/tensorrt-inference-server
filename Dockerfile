@@ -89,12 +89,15 @@ ARG TFS_BRANCH=r1.12
 
 # libcurl and libopencv are needed to build some testing
 # applications. libgoogle-glog0v5 is needed by caffe2 libraries.
+# libopencv is needed by image preprocessing custom backend
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
             automake \
             libgoogle-glog0v5 \
+            libopencv-dev \
+            libopencv-core-dev \
             libtool
-
+            
 # Use the PYVER version of python
 RUN rm -f /usr/bin/python && \
     rm -f /usr/bin/python`echo $PYVER | cut -c1-1` && \
@@ -181,6 +184,7 @@ RUN (cd /opt/tensorflow && ./nvbuild.sh --python$PYVER --configonly) && \
     cp bazel-bin/src/test/caffe2plan /opt/tensorrtserver/bin/. && \
     mkdir -p /opt/tensorrtserver/custom && \
     cp bazel-bin/src/custom/addsub/libaddsub.so /opt/tensorrtserver/custom/. && \
+    cp bazel-bin/src/custom/image_preprocess/libimagepreprocess.so /opt/tensorrtserver/custom/. && \
     cp bazel-bin/src/custom/param/libparam.so /opt/tensorrtserver/custom/. && \
     cp bazel-bin/src/custom/sequence/libsequence.so /opt/tensorrtserver/custom/. && \
     bazel clean --expunge && \
