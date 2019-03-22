@@ -120,9 +120,11 @@ def np_to_trt_dtype(np_dtype):
     return None
 
 def create_tf_modelfile(
-        create_savedmodel, models_dir, model_version, io_cnt, max_batch, dtype, shape):
+        create_savedmodel, models_dir, model_version, io_cnt, max_batch,
+        dtype, input_shape, input_reshape):
 
-    if not tu.validate_for_tf_model(dtype, dtype, dtype, shape, shape, shape):
+    if not tu.validate_for_tf_model(dtype, dtype, dtype,
+                                    input_reshape, input_reshape, input_reshape):
         return
 
     tf_dtype = np_to_tf_dtype(dtype)
@@ -133,9 +135,9 @@ def create_tf_modelfile(
         input_name = "INPUT{}".format(io_num)
         output_name = "OUTPUT{}".format(io_num)
         if max_batch == 0:
-            tin = tf.placeholder(tf_dtype, tu.shape_to_tf_shape(shape), input_name)
+            tin = tf.placeholder(tf_dtype, tu.shape_to_tf_shape(input_reshape), input_name)
         else:
-            tin = tf.placeholder(tf_dtype, [None,] + tu.shape_to_tf_shape(shape), input_name)
+            tin = tf.placeholder(tf_dtype, [None,] + tu.shape_to_tf_shape(input_reshape), input_name)
         toutput = tf.identity(tin, name=output_name)
 
     # Use model name based on io_cnt and non-batching variant
@@ -172,12 +174,15 @@ def create_tf_modelfile(
                                  "model.graphdef", as_text=False)
 
 def create_tf_modelconfig(
-        create_savedmodel, models_dir, model_version, io_cnt, max_batch, dtype, shape):
+        create_savedmodel, models_dir, model_version, io_cnt, max_batch,
+        dtype, input_shape, input_reshape):
 
-    if not tu.validate_for_tf_model(dtype, dtype, dtype, shape, shape, shape):
+    if not tu.validate_for_tf_model(dtype, dtype, dtype,
+                                    input_reshape, input_reshape, input_reshape):
         return
 
-    shape_str = tu.shape_to_dims_str(shape)
+    shape_str = tu.shape_to_dims_str(input_shape)
+    reshape_str = tu.shape_to_dims_str(input_reshape)
 
     # Use a different model name for the non-batching variant
     if create_savedmodel:
@@ -203,6 +208,7 @@ input [
     name: "INPUT{}"
     data_type: {}
     dims: [ {} ]
+    reshape: {{ shape: [ {} ] }}
   }}
 ]
 output [
@@ -210,10 +216,11 @@ output [
     name: "OUTPUT{}"
     data_type: {}
     dims: [ {} ]
+    reshape: {{ shape: [ {} ] }}
   }}
 ]
-'''.format(io_num, np_to_model_dtype(dtype), shape_str,
-           io_num, np_to_model_dtype(dtype), shape_str)
+'''.format(io_num, np_to_model_dtype(dtype), shape_str, reshape_str,
+           io_num, np_to_model_dtype(dtype), shape_str, reshape_str)
 
     try:
         os.makedirs(config_dir)
@@ -234,7 +241,7 @@ def create_netdef_modelfile(
     model_name = tu.get_zero_model_name(
         "netdef_nobatch" if max_batch == 0 else "netdef", io_cnt, dtype)
 
-    # Create the model that copies inputs to corresponding outputs.
+    # The model just copies the input to the output.
     model = c2model_helper.ModelHelper(name=model_name)
     for io_num in range(io_cnt):
         model.net.Copy("INPUT{}".format(io_num), "OUTPUT{}".format(io_num))
@@ -297,29 +304,41 @@ output [
         cfile.write(config)
 
 
-def create_models(models_dir, dtype, shape, io_cnt=1, no_batch=True):
+def create_models(models_dir, dtype, input_shape, input_reshape, io_cnt=1, no_batch=True):
     model_version = 1
 
     if FLAGS.graphdef:
-        create_tf_modelconfig(False, models_dir, model_version, io_cnt, 8, dtype, shape)
-        create_tf_modelfile(False, models_dir, model_version, io_cnt, 8, dtype, shape)
+        create_tf_modelconfig(False, models_dir, model_version, io_cnt, 8,
+                              dtype, input_shape, input_reshape)
+        create_tf_modelfile(False, models_dir, model_version, io_cnt, 8,
+                            dtype, input_shape, input_reshape)
         if no_batch:
-            create_tf_modelconfig(False, models_dir, model_version, io_cnt, 0, dtype, shape)
-            create_tf_modelfile(False, models_dir, model_version, io_cnt, 0, dtype, shape)
+            create_tf_modelconfig(False, models_dir, model_version, io_cnt, 0,
+                                  dtype, input_shape, input_reshape)
+            create_tf_modelfile(False, models_dir, model_version, io_cnt, 0,
+                                dtype, input_shape, input_reshape)
 
     if FLAGS.savedmodel:
-        create_tf_modelconfig(True, models_dir, model_version, io_cnt, 8, dtype, shape)
-        create_tf_modelfile(True, models_dir, model_version, io_cnt, 8, dtype, shape)
+        create_tf_modelconfig(True, models_dir, model_version, io_cnt, 8,
+                              dtype, input_shape, input_reshape)
+        create_tf_modelfile(True, models_dir, model_version, io_cnt, 8,
+                                dtype, input_shape, input_reshape)
         if no_batch:
-            create_tf_modelconfig(True, models_dir, model_version, io_cnt, 0, dtype, shape)
-            create_tf_modelfile(True, models_dir, model_version, io_cnt, 0, dtype, shape)
+            create_tf_modelconfig(True, models_dir, model_version, io_cnt, 0,
+                                  dtype, input_shape, input_reshape)
+            create_tf_modelfile(True, models_dir, model_version, io_cnt, 0,
+                                dtype, input_shape, input_reshape)
 
-    if FLAGS.netdef:
-        create_netdef_modelconfig(True, models_dir, model_version, io_cnt, 8, dtype, shape)
-        create_netdef_modelfile(True, models_dir, model_version, io_cnt, 8, dtype, shape)
-        if no_batch:
-            create_netdef_modelconfig(True, models_dir, model_version, io_cnt, 0, dtype, shape)
-            create_netdef_modelfile(True, models_dir, model_version, io_cnt, 0, dtype, shape)
+#    if FLAGS.netdef:
+#        create_netdef_modelconfig(True, models_dir, model_version, io_cnt, 8,
+#                                dtype, input_shape, input_reshape)
+#        create_netdef_modelfile(True, models_dir, model_version, io_cnt, 8,
+#                                dtype, input_shape, input_reshape)
+#        if no_batch:
+#            create_netdef_modelconfig(True, models_dir, model_version, io_cnt, 0,
+#                                dtype, input_shape, input_reshape)
+#            create_netdef_modelfile(True, models_dir, model_version, io_cnt, 0,
+#                                dtype, input_shape, input_reshape)
 
 
 if __name__ == '__main__':
@@ -332,6 +351,8 @@ if __name__ == '__main__':
                         help='Generate SavedModel models')
     parser.add_argument('--netdef', required=False, action='store_true',
                         help='Generate NetDef models')
+    parser.add_argument('--tensorrt', required=False, action='store_true',
+                        help='Generate TensorRT PLAN models')
     FLAGS, unparsed = parser.parse_known_args()
 
     if FLAGS.netdef:
@@ -340,13 +361,12 @@ if __name__ == '__main__':
     if FLAGS.graphdef or FLAGS.savedmodel:
         import tensorflow as tf
         from tensorflow.python.framework import graph_io, graph_util
+    if FLAGS.tensorrt:
+        import tensorrt.legacy as trt
 
     import test_util as tu
 
-    # Create models with variable-sized input and output.
-    create_models(FLAGS.models_dir, np.float32, [-1], io_cnt=1)
-    create_models(FLAGS.models_dir, np.float32, [-1], io_cnt=3)
-    create_models(FLAGS.models_dir, np.float16, [-1,-1], io_cnt=1)
-    create_models(FLAGS.models_dir, np.float16, [-1,-1], io_cnt=3)
-    create_models(FLAGS.models_dir, np_dtype_string, [-1], io_cnt=1)
-    create_models(FLAGS.models_dir, np_dtype_string, [-1,-1], io_cnt=3)
+    create_models(FLAGS.models_dir, np.float32, [1], [], io_cnt=1)
+    create_models(FLAGS.models_dir, np.float32, [1], [], io_cnt=3)
+    create_models(FLAGS.models_dir, np.float16, [8], [8,1,1], io_cnt=1)
+    create_models(FLAGS.models_dir, np.float16, [8], [8,1,1], io_cnt=3)

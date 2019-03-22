@@ -500,32 +500,32 @@ def create_models(models_dir, dtype, shape, no_batch=True):
     model_version = 1
 
     if FLAGS.graphdef:
-        create_tf_modelconfig(False, models_dir, model_version, 8, dtype, shape);
-        create_tf_modelfile(False, models_dir, model_version, 8, dtype, shape);
+        create_tf_modelconfig(False, models_dir, model_version, 8, dtype, shape)
+        create_tf_modelfile(False, models_dir, model_version, 8, dtype, shape)
         if no_batch:
-            create_tf_modelconfig(False, models_dir, model_version, 0, dtype, shape);
-            create_tf_modelfile(False, models_dir, model_version, 0, dtype, shape);
+            create_tf_modelconfig(False, models_dir, model_version, 0, dtype, shape)
+            create_tf_modelfile(False, models_dir, model_version, 0, dtype, shape)
 
     if FLAGS.savedmodel:
-        create_tf_modelconfig(True, models_dir, model_version, 8, dtype, shape);
-        create_tf_modelfile(True, models_dir, model_version, 8, dtype, shape);
+        create_tf_modelconfig(True, models_dir, model_version, 8, dtype, shape)
+        create_tf_modelfile(True, models_dir, model_version, 8, dtype, shape)
         if no_batch:
-            create_tf_modelconfig(True, models_dir, model_version, 0, dtype, shape);
-            create_tf_modelfile(True, models_dir, model_version, 0, dtype, shape);
+            create_tf_modelconfig(True, models_dir, model_version, 0, dtype, shape)
+            create_tf_modelfile(True, models_dir, model_version, 0, dtype, shape)
 
     if FLAGS.netdef:
-        create_netdef_modelconfig(True, models_dir, model_version, 8, dtype, shape);
-        create_netdef_modelfile(True, models_dir, model_version, 8, dtype, shape);
+        create_netdef_modelconfig(True, models_dir, model_version, 8, dtype, shape)
+        create_netdef_modelfile(True, models_dir, model_version, 8, dtype, shape)
         if no_batch:
-            create_netdef_modelconfig(True, models_dir, model_version, 0, dtype, shape);
-            create_netdef_modelfile(True, models_dir, model_version, 0, dtype, shape);
+            create_netdef_modelconfig(True, models_dir, model_version, 0, dtype, shape)
+            create_netdef_modelfile(True, models_dir, model_version, 0, dtype, shape)
 
     if FLAGS.tensorrt:
-        create_plan_modelconfig(True, models_dir, model_version, 8, dtype, shape + [1, 1]);
-        create_plan_modelfile(True, models_dir, model_version, 8, dtype, shape + [1, 1]);
+        create_plan_modelconfig(True, models_dir, model_version, 8, dtype, shape + [1, 1])
+        create_plan_modelfile(True, models_dir, model_version, 8, dtype, shape + [1, 1])
         if no_batch:
-            create_plan_modelconfig(True, models_dir, model_version, 0, dtype, shape + [1, 1]);
-            create_plan_modelfile(True, models_dir, model_version, 0, dtype, shape + [1, 1]);
+            create_plan_modelconfig(True, models_dir, model_version, 0, dtype, shape + [1, 1])
+            create_plan_modelfile(True, models_dir, model_version, 0, dtype, shape + [1, 1])
 
 
 if __name__ == '__main__':
